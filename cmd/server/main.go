@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/wasupalonely/recepify/config"
+	"github.com/wasupalonely/recepify/internal/models"
 	"github.com/wasupalonely/recepify/internal/router"
-	"github.com/wasupalonely/recepify/internal/user"
 	"github.com/wasupalonely/recepify/pkg/db"
 )
 
@@ -17,7 +17,7 @@ func main() {
 	}
 
 	// TODO: AUTOMIGRATE MODELS
-	db.GetDB().AutoMigrate(&user.User{})
+	db.GetDB().AutoMigrate(&models.User{}, &models.Category{}, &models.Recipe{})
 
 	r := router.SetupRouter()
 
