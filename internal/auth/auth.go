@@ -7,6 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/wasupalonely/recepify/config"
+	"github.com/wasupalonely/recepify/internal/models"
 	"github.com/wasupalonely/recepify/internal/user"
 	"github.com/wasupalonely/recepify/internal/validations"
 )
@@ -56,7 +57,7 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	newUser := user.User{
+	newUser := models.User{
 		Username: registerData.Username,
 		Password: hashedPassword,
 		Email:    registerData.Email,
@@ -67,5 +68,5 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully", "user": newUser})
 }
