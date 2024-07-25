@@ -58,3 +58,7 @@ func DeleteUser(userID string) error {
 	return db.DB.Delete(&models.User{}, userID).Error
 }
 
+func UpdateUserProfilePicture(userID uint, imageURL string) error {
+	return db.GetDB().Model(&models.User{}).Where("id = ?", userID).Update("profile_picture", imageURL).Error
+}
+
