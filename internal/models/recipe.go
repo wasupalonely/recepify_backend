@@ -17,6 +17,7 @@ type Recipe struct {
 	Description string          `json:"description" binding:"required"`
 	Ingredients json.RawMessage `json:"ingredients" gorm:"type:jsonb" binding:"required"`
 	UserID      uint            `json:"user_id" binding:"required"`
+	Steps       []Step          `json:"steps"`
 	Categories  []Category      `gorm:"many2many:recipe_categories;" json:"categories"`
 	CategoryIDs []uint          `json:"category_ids" gorm:"-"`
 }

@@ -26,6 +26,7 @@ func SetupRouter() *gin.Engine {
 				usersGroup.POST("/", user.CreateUserHandler)
 				usersGroup.PUT("/:id", user.UpdateUserHandler)
 				usersGroup.DELETE("/:id", user.DeleteUserHandler)
+				usersGroup.POST("/profile-picture/:id", user.UpdateProfilePictureHandler)
 			}
 
 			categoriesGroup := authGroup.Group("/categories")

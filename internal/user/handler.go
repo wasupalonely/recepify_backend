@@ -3,12 +3,50 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wasupalonely/recepify/internal/models"
+	"github.com/wasupalonely/recepify/internal/uploads/cloudinary"
 	"github.com/wasupalonely/recepify/internal/validations"
 )
+
+func UpdateProfilePictureHandler(c *gin.Context) {
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	filePath := "./temp/" + file.Filename
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
+	defer os.Remove(filePath)
+
+	imageURL, err := cloudinary.UploadImage(filePath, "profile-pictures")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+		return
+	}
+
+	userIDConv, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := UpdateUserProfilePicture(uint(userIDConv), imageURL); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile picture"})
+		return
+	}
+
+	// Devolver la URL de la imagen subida
+	c.JSON(http.StatusOK, gin.H{"url": imageURL})
+}
+
 
 func CreateUserHandler(c *gin.Context) {
 	var user models.User

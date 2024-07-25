@@ -14,8 +14,9 @@ func CreateRecipeHandler(c *gin.Context) {
 		Title       string              `json:"title" binding:"required"`
 		Description string              `json:"description" binding:"required"`
 		Ingredients []models.Ingredient `json:"ingredients" binding:"required"`
+		Steps       []models.Step       `json:"steps"`
 		UserID      uint                `json:"user_id" binding:"required"`
-		CategoryIDs []uint              `json:"category_ids" binding:"required"` // IDs para las categorías
+		CategoryIDs []uint              `json:"category_ids"`
 	}
 
 	if err := c.ShouldBindJSON(&recipeInput); err != nil {
@@ -34,25 +35,50 @@ func CreateRecipeHandler(c *gin.Context) {
 		Description: recipeInput.Description,
 		Ingredients: ingredientsJSON,
 		UserID:      recipeInput.UserID,
-		CategoryIDs: recipeInput.CategoryIDs,
 	}
 
-	var categories []models.Category
-	if len(recipe.CategoryIDs) > 0 {
-		if err := db.DB.Find(&categories, recipe.CategoryIDs).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Could not find categories"})
-			return
-		}
-		recipe.Categories = categories
-	}
+	tx := db.DB.Begin()
 
-	if err := CreateRecipe(&recipe); err != nil {
+	if err := tx.Create(&recipe).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create recipe"})
 		return
 	}
 
+	for i := range recipeInput.Steps {
+		recipeInput.Steps[i].RecipeID = recipe.ID
+	}
+	if err := tx.Create(&recipeInput.Steps).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create steps"})
+		return
+	}
+
+	if err := tx.Model(&recipe).Association("Steps").Append(&recipeInput.Steps); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not associate steps"})
+		return
+	}
+
+	if len(recipeInput.CategoryIDs) > 0 {
+		var categories []models.Category
+		if err := tx.Find(&categories, recipeInput.CategoryIDs).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusNotFound, gin.H{"error": "Could not find categories"})
+			return
+		}
+		if err := tx.Model(&recipe).Association("Categories").Append(&categories); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not associate categories"})
+			return
+		}
+	}
+
+	tx.Commit()
+
 	c.JSON(http.StatusOK, recipe)
 }
+
 
 func GetRecipesHandler(c *gin.Context) {
 	recipes, err := GetAllRecipes()
