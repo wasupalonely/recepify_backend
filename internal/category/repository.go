@@ -10,9 +10,9 @@ func CreateCategory(category *models.Category) error {
 	return db.DB.Create(category).Error
 }
 
-func GetCategories() ([]models.Category, error) {
+func GetCategories(limit int, offset int) ([]models.Category, error) {
 	var categories []models.Category
-	if err := db.DB.Find(&categories).Error; err != nil {
+	if err := db.DB.Limit(limit).Offset(offset).Find(&categories).Error; err != nil {
 		return nil, err
 	}
 	return categories, nil

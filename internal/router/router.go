@@ -1,6 +1,9 @@
 package router
 
 import (
+	"net/http"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/wasupalonely/recepify/internal/auth"
 	"github.com/wasupalonely/recepify/internal/category"
@@ -10,11 +13,31 @@ import (
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	api := r.Group("/api/v1")
 	{
+		// Root endpoint
+		api.GET("/", func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{"message": "Welcome to Recepify"})
+		})
+
+		// Auth
 		api.POST("/login", auth.LoginHandler)
 		api.POST("/register", auth.RegisterHandler)
+
+		// No auth recipes
+		recipesGroup := api.Group("/recipes")
+		{
+			recipesGroup.GET("/:id", recipe.GetRecipeHandler)
+			recipesGroup.GET("/", recipe.GetRecipesHandler)
+		}
+
+		// No auth categories
+		categoriesGroup := api.Group("/categories")
+		{
+			categoriesGroup.GET("/", category.GetCategoriesHandler)
+		}
 
 		authGroup := api.Group("/")
 		authGroup.Use(auth.AuthMiddleware())
@@ -31,7 +54,6 @@ func SetupRouter() *gin.Engine {
 
 			categoriesGroup := authGroup.Group("/categories")
 			{
-				categoriesGroup.GET("/", category.GetCategoriesHandler)
 				categoriesGroup.GET("name/:name", category.GetCategoryByNameHandler)
 				categoriesGroup.GET("/:id", category.GetCategoryHandler)
 				categoriesGroup.POST("/", category.CreateCategoryHandler)
@@ -41,8 +63,6 @@ func SetupRouter() *gin.Engine {
 
 			recipesGroup := authGroup.Group("/recipes")
 			{
-				recipesGroup.GET("/:id", recipe.GetRecipeHandler)
-				recipesGroup.GET("/", recipe.GetRecipesHandler)
 				recipesGroup.POST("/", recipe.CreateRecipeHandler)
 				recipesGroup.PUT("/:id", recipe.UpdateRecipeHandler)
 				recipesGroup.DELETE("/:id", recipe.DeleteRecipeHandler)

@@ -3,6 +3,7 @@ package recipe
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wasupalonely/recepify/internal/models"
@@ -79,13 +80,52 @@ func CreateRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipe)
 }
 
-
 func GetRecipesHandler(c *gin.Context) {
-	recipes, err := GetAllRecipes()
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	recipes, err := GetAllRecipes(limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not get recipes"})
 		return
 	}
+
+	c.JSON(http.StatusOK, recipes)
+}
+
+func GetRecipesByUserIDHandler(c *gin.Context) {
+	userID := c.Param("id")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	recipes, err := GetRecipesByUserID(userID, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not get recipes"})
+		return
+	}
+
 	c.JSON(http.StatusOK, recipes)
 }
 

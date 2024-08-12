@@ -9,9 +9,9 @@ func CreateRecipe(recipe *models.Recipe) error {
 	return db.DB.Create(recipe).Error
 }
 
-func GetAllRecipes() ([]models.Recipe, error) {
+func GetAllRecipes(limit int, offset int) ([]models.Recipe, error) {
 	var recipes []models.Recipe
-	if err := db.DB.Debug().Preload("Steps").Preload("Categories").Find(&recipes).Error; err != nil {
+	if err := db.DB.Debug().Preload("Steps").Preload("Categories").Limit(limit).Offset(offset).Find(&recipes).Error; err != nil {
 		return nil, err
 	}
 	return recipes, nil
@@ -33,9 +33,9 @@ func DeleteRecipe(id string) error {
 	return db.DB.Delete(&models.Recipe{}, id).Error
 }
 
-func GetRecipesByUserID(userID string) ([]models.Recipe, error) {
+func GetRecipesByUserID(userID string, limit int, offset int) ([]models.Recipe, error) {
 	var recipes []models.Recipe
-	if err := db.DB.Preload("Categories").Where("user_id = ?", userID).Find(&recipes).Error; err != nil {
+	if err := db.DB.Preload("Categories").Where("user_id = ?", userID).Limit(limit).Offset(offset).Find(&recipes).Error; err != nil {
 		return nil, err
 	}
 	return recipes, nil
