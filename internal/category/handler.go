@@ -2,6 +2,7 @@ package category
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wasupalonely/recepify/internal/models"
@@ -22,7 +23,21 @@ func CreateCategoryHandler(c *gin.Context) {
 }
 
 func GetCategoriesHandler(c *gin.Context) {
-	categories, err := GetCategories()
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	categories, err := GetCategories(limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not get categories"})
 		return

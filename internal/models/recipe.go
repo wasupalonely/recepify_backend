@@ -15,6 +15,7 @@ type Recipe struct {
 	gorm.Model
 	Title       string          `json:"title" binding:"required"`
 	Description string          `json:"description" binding:"required"`
+	Image		string 			`json:"image"`
 	Ingredients json.RawMessage `json:"ingredients" gorm:"type:jsonb" binding:"required"`
 	UserID      uint            `json:"user_id" binding:"required"`
 	Steps       []Step          `json:"steps"`
